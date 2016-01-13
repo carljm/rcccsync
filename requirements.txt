@@ -1,0 +1,5 @@
+gdata==2.0.18
+
+pytest==2.8.5
+py==1.4.31
+pytest-pythonpath==0.7
