@@ -34,12 +34,12 @@ def main(subgroup=''):
     cl = get_client()
     rows = cl.get_list_feed(config.SHEET_ID, config.WORKSHEET_ID)
     parsed = (parse_name_and_email(x) for x in sys.stdin.xreadlines())
-    incoming = dict((x[2], x) for x in parsed)
+    incoming = dict((x[2].lower(), x) for x in parsed)
     for row in rows.entry:
         data = row.to_dict()
         found = False
         for emailcol in ['emailone', 'emailtwo']:
-            email = data.get(emailcol)
+            email = data.get(emailcol, '').lower()
             if email in incoming:
                 print "Found %s" % email
                 del incoming[email]
@@ -54,6 +54,8 @@ def main(subgroup=''):
         row.set_value('firstname', first)
         row.set_value('lastname', last)
         row.set_value('emailone', email)
+        if subgroup:
+            row.set_value('subgroup', 'X')
         cl.add_list_entry(row, config.SHEET_ID, config.WORKSHEET_ID)
 
 
