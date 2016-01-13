@@ -55,7 +55,7 @@ def main(subgroup=''):
         row.set_value('lastname', last)
         row.set_value('emailone', email)
         if subgroup:
-            row.set_value('subgroup', 'X')
+            row.set_value(subgroup, 'X')
         cl.add_list_entry(row, config.SHEET_ID, config.WORKSHEET_ID)
 
 
