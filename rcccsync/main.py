@@ -29,6 +29,23 @@ def get_client():
     return client.get_client(get_stored_access_code())
 
 
+def list_emails(subgroup=''):
+    subgroup = subgroup.lower()
+    cl = get_client()
+    rows = cl.get_list_feed(config.SHEET_ID, config.WORKSHEET_ID)
+    for row in rows.entry:
+        email = row.get_value('emailone') or row.get_value('emailtwo')
+        if email and ((not subgroup) or row.get_value(subgroup)):
+            print (
+                "%s %s %s <%s>" % (
+                    row.get_value('title') or '',
+                    row.get_value('firstname') or '',
+                    row.get_value('lastname') or '',
+                    email,
+                )
+            ).strip()
+
+
 def main(subgroup=''):
     subgroup = subgroup.lower()
     cl = get_client()
