@@ -34,7 +34,7 @@ def main(subgroup=''):
     cl = get_client()
     rows = cl.get_list_feed(config.SHEET_ID, config.WORKSHEET_ID)
     parsed = (parse_name_and_email(x) for x in sys.stdin.xreadlines())
-    incoming = {x[2]: x for x in parsed}
+    incoming = dict((x[2], x) for x in parsed)
     for row in rows.entry:
         data = row.to_dict()
         found = False
