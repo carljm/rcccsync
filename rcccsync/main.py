@@ -56,7 +56,7 @@ def main(subgroup=''):
         data = row.to_dict()
         found = False
         for emailcol in ['emailone', 'emailtwo']:
-            email = data.get(emailcol, '').lower()
+            email = (data.get(emailcol) or '').lower()
             if email in incoming:
                 print "Found %s" % email
                 del incoming[email]
