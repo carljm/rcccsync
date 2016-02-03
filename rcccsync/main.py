@@ -1,3 +1,4 @@
+import csv
 import os
 import sys
 
@@ -47,11 +48,12 @@ def list_emails(subgroup=''):
 
 
 def main(subgroup=''):
+    """Take CSV with firstname, lastname, email, phone; add to spreadsheet."""
     subgroup = subgroup.lower()
     cl = get_client()
     rows = cl.get_list_feed(config.SHEET_ID, config.WORKSHEET_ID)
-    parsed = (parse_name_and_email(x) for x in sys.stdin.xreadlines())
-    incoming = dict((x[2].lower(), x) for x in parsed)
+    reader = csv.DictReader(sys.stdin)
+    incoming = dict((x['email'].lower(), x) for x in reader)
     for row in rows.entry:
         data = row.to_dict()
         found = False
@@ -59,21 +61,44 @@ def main(subgroup=''):
             email = (data.get(emailcol) or '').lower()
             if email in incoming:
                 print "Found %s" % email
-                del incoming[email]
+                newdata = incoming.pop(email)
                 found = True
-        if found and subgroup:
-            print "  adding to %s" % subgroup
-            row.from_dict({subgroup: 'X'})
-            cl.update(row)
-    for first, last, email in incoming.values():
-        print "Adding %s %s <%s>" % (first, last, email)
+        if found:
+            update = {}
+            if subgroup:
+                print "  adding to %s" % subgroup
+                update[subgroup] = 'X'
+            field_map = {
+                'cellphone': 'phone',
+                'firstname': 'firstname',
+                'lastname': 'lastname'
+            }
+            for field, newfield in field_map.items():
+                if newdata[newfield] and not data.get(field):
+                    print "  updating %s to %s" % (field, newdata[newfield])
+                    update[field] = newdata[newfield]
+            if update:
+                row.from_dict(update)
+                cl.update(row)
+    for newrow in incoming.values():
+        print "Adding %s %s <%s>" % (
+            newrow['firstname'], newrow['lastname'], newrow['email'])
         row = ListEntry()
-        row.set_value('firstname', first)
-        row.set_value('lastname', last)
-        row.set_value('emailone', email)
+        row.set_value('firstname', newrow['firstname'])
+        row.set_value('lastname', newrow['lastname'])
+        row.set_value('emailone', newrow['email'])
+        row.set_value('cellphone', newrow['phone'])
         if subgroup:
             row.set_value(subgroup, 'X')
         cl.add_list_entry(row, config.SHEET_ID, config.WORKSHEET_ID)
+
+
+def name_and_email_to_csv():
+    """Take lines like 'First Last <foo@example.com>' on stdin, output csv."""
+    writer = csv.writer(sys.stdout)
+    writer.writerow(['firstname', 'lastname', 'email', 'phone'])
+    for row in (parse_name_and_email(x) for x in sys.stdin.xreadlines()):
+        writer.writerow(list(row) + [''])
 
 
 def parse_name_and_email(instr):
